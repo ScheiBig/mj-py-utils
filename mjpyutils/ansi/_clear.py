@@ -1,0 +1,20 @@
+class clear:
+    '''Utilities for console clearing'''
+    class disp:
+        '''Clears display'''
+        END = '\u001b[0J'
+        '''Clears from cursor to end of the screen'''
+        BEGIN = '\u001b[1J'
+        '''Clears from cursor to beginning of the screen'''
+        ALL = '\u001b[2J'
+        '''Clears the entire screen and moves to beginning of first line'''
+        SCROLL = '\u001b[3J'
+        '''Clears the entire screen, scrollback buffer and moves to beginning of first line'''
+    class ln:
+        '''Clears current line'''
+        END = '\u001b[0K'
+        '''Clears from cursor to end of the current line'''
+        BEGIN = '\u001b[1K'
+        '''Clears from cursor to beginning of the current line'''
+        ALL = '\u001b[2K'
+        '''Clears the entire current line, without moving cursor'''
