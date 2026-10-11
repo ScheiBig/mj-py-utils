@@ -1,6 +1,6 @@
 from . import ansi
 from . import db
-from .timer import timer
+from ._timer import timer
 from .password import password
 
 __all__ = [

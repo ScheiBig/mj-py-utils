@@ -25,7 +25,7 @@ class timer(object):
 
     ``timer`` can be used in two main ways - created (started) and stopped manually,
     or as contextual resource:
-    
+
     ```
     ## manual
     t1 = Timer(auto_start= True)
@@ -40,22 +40,29 @@ class timer(object):
     ```
     '''
 
-    def __init__(self, *, 
+    type hook = _fun[[timer, _datetime], str | None]
+    '''
+    Hook for the ``timer`` to print message on state change.
+
+    Takes ``timer`` and ``datetime`` as arguments, and must return ``str`` or nothing.
+    '''
+
+    def __init__(self, *,
         auto_start: bool = False,
         use_perf_time: bool = True,
-        onstart_print: _fun[[timer], str | None] | _lit[True] | None = None,
-        onpause_print: _fun[[timer], str | None] | _lit[True] | None = None,
-        onresume_print: _fun[[timer], str | None] | _lit[True] | None = None,
-        onstop_print: _fun[[timer], str | None] | _lit[True] | None = None,
+        onstart_print: timer.hook | _lit[True] | None = None,
+        onpause_print: timer.hook | _lit[True] | None = None,
+        onresume_print: timer.hook | _lit[True] | None = None,
+        onstop_print: timer.hook | _lit[True] | None = None,
     ) -> None:
         '''Creates new ``timer``.
 
-        New ``timer`` can auto-start after creation (it will when using context manager) 
+        New ``timer`` can auto-start after creation (it will when using context manager)
         and by default it uses ``time.perftime`` to ensure proper counting.
 
         ``on{}_print`` lifecycle hooks can be used to provide function that takes ``timer``
-        and returns message to print; ``True`` can also be provided, which will result in
-        using default-provided hook.
+        and ``datetime`` and returns message to print; ``True`` can also be provided,
+        which will result in using default-provided hook.
 
         :param auto_start: If ``True``, timer will start running after creation
         :param use_perf_time: If ``True``, uses ``time.perftime()`` instead of ``time.time()``;
@@ -70,26 +77,26 @@ class timer(object):
         self.__execution_time_s: float | None = None
         self.__curtime: _fun[[], float] = _perftime if use_perf_time else _time
 
-        self.__onstart_print: _fun[[], str | None] | None = (
+        self.__onstart_print: _bound_hook | None = (
             _MethodType(_default_print('started'), self) if onstart_print == True
             else _MethodType(onstart_print, self) if onstart_print is not None
             else None
-        ) 
-        self.__onpause_print: _fun[[], str | None] | None = (
+        )
+        self.__onpause_print: _bound_hook | None = (
             _MethodType(_default_print('paused'), self) if onpause_print == True
             else _MethodType(onpause_print, self) if onpause_print is not None
             else None
-        ) 
-        self.__onresume_print: _fun[[], str | None] | None = (
+        )
+        self.__onresume_print: _bound_hook | None = (
             _MethodType(_default_print('resumed'), self) if onresume_print == True
             else _MethodType(onresume_print, self) if onresume_print is not None
             else None
-        ) 
-        self.__onstop_print: _fun[[], str | None] | None = (
+        )
+        self.__onstop_print: _bound_hook | None = (
             _MethodType(_default_print('stopped'), self) if onstop_print == True
             else _MethodType(onstop_print, self) if onstop_print is not None
             else None
-        ) 
+        )
 
         if auto_start:
             self.start()
@@ -186,7 +193,7 @@ class timer(object):
         ``+`` can be followed by numerical format ``{{0/_}{n}}{.{m}}``, ``{n}`` and ``{m}`` being unsigned integers, representing:
         - ``{n}`` - padding of duration, depending on preceding character either 0 or space padding,
         - ``{m}`` - number of digits after decimal point
-        
+
         ``{{0/_}{n}}`` format is also allowed for unflagged time segment.
 
         Additional available directives, without modifiers:
@@ -265,18 +272,18 @@ class timer(object):
             val = tot if v['flag'] == '+' else part
             fmt = ''
 
-            fmt += ( 
+            fmt += (
                 deff if v['flag'] != '#'
                 else f'{v['pad']}{v['width']}' if v['width'] is not None
                 else ''
             )
-            fmt += ( 
+            fmt += (
                 f'.{v['prec']}f' if v['prec'] is not None
                 else '.0f'
             )
             if v['prec'] is None and not _isNaN(tot):
                 val = int(val)
-            
+
             out += (
                 f'{val:{fmt}}' if not _isNaN(tot)
                 else f'{0.0:{fmt}}'.replace('0', '-')
@@ -420,13 +427,15 @@ def _validate_token(tok: _token) -> ValueError | _token:
 
     return ValueError(f'[{tok['raw']}]: Unknown format directive: %{tok['directive']}')
 
-def _default_print(state: str) -> _fun[[timer], str | None]:
+def _default_print(state: str) -> timer.hook:
     if state == 'started':
-        return lambda _ : f'Timer {state} @ {_datetime.now()}'
-    return lambda s: f'Timer {state} after {s} @ {_datetime.now()}'
+        return lambda _, d: f'Timer {state} @ {d}'
+    return lambda s, d: f'Timer {state} after {s} @ {d}'
 
-def _call_hook(hook: _fun[[], str | None] | None) -> None:
+type _bound_hook = _fun[[_datetime], str | None]
+
+def _call_hook(hook: _bound_hook | None) -> None:
     if hook is not None:
-        s = hook()
+        s = hook(_datetime.now())
         if s is not None:
             print(s)
