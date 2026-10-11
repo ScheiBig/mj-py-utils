@@ -9,4 +9,5 @@ dependencies = [
     'polars',
     'arrow-odbc',
     'pyarrow',
+    'wakepy',
 ]

@@ -11,6 +11,11 @@ from typing import (
     overload,
 )
 from types import TracebackType
+from wakepy import (
+    keep,
+    Mode,
+    ModeExit,
+)
 
 class db_library[
     TConnection: oracledb_Connection | polars_arrow_ODBCCursorProxy | pyodbc_Connection | arrow_odbc_Connection,
@@ -39,6 +44,8 @@ class db_library[
         self.__conn_args = args
         self.__conn_kwargs = kwargs
 
+        self.__screen_hold: Mode = keep.presenting()
+
     @property
     def conn(self) -> TConnection:
         '''Returns current connection.
@@ -62,19 +69,21 @@ class db_library[
         self.__conn = self.__conn_provider(*self.__conn_args, **self.__conn_kwargs)
         if isinstance(self.__conn, (oracledb_Connection, pyodbc_Connection)):
             self.__conn.__enter__()
+        self.__screen_hold.__enter__()
         return self.__conn
 
     def __exit__(self, 
         exc_type: type[Exception] | None, 
         exc: Exception | None, 
         tb: TracebackType | None,
-    ):
+    ) -> bool:
         '''
         Disposes current connection, via its own `__exit__` / `__del__` if available,
         passing all arguments to it.
 
         :raises ValueError: When this method is called again before :meth:`__enter__`
         '''
+        self.__screen_hold.__exit__(None, None, None)
         if self.__conn is None:
             raise ValueError('Library is not in use - no connection to exit')
         conn = self.__conn
@@ -83,6 +92,9 @@ class db_library[
             conn.__exit__(exc_type, exc, tb)
         elif isinstance(conn, arrow_odbc_Connection):
             conn.__del__()
+        
+        # we should swallow ModeExit exception per Mode.__exit__ implementation
+        return exc is None or isinstance(exc, ModeExit)
 
 
 
