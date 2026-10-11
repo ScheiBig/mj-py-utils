@@ -16,16 +16,24 @@ __all__ = [
     'def_MS_odbc_driver',
     'oracle',
     'sqlserver',
+    'data_sources',
+    'odbc_drivers',
+    'oracledb_Connection',
+    'pyodbc_Connection',
 ]
 
 import oracledb as _oracledb
+from oracledb import Connection as oracledb_Connection
 import pyodbc as _pyodbc
+from pyodbc import Connection as pyodbc_Connection
 from typing import (
     Callable as _fun,
     Literal as _lit,
     overload as _overload
 )
 import os as _os
+from pathlib import Path as _Path
+import sys as _sys
 
 def_Ora_username: str | None = None
 '''Default value used for ``oracle(username=)``'''
@@ -43,34 +51,34 @@ def_MS_odbc_driver: str | None = None
 
 @_overload
 def oracle(
-    dsn: str, 
+    dsn: str,
     *,
     username: str | None = None,
     password: str | None = None,
     tnsnames: str | None = None,
     odbc_driver: _lit[False],
-) -> _oracledb.Connection: ...
+) -> oracledb_Connection: ...
 
 
 @_overload
 def oracle(
-    dsn: str, 
+    dsn: str,
     *,
     username: str | None = None,
     password: str | None = None,
     tnsnames: str | None = None,
     odbc_driver: str | None = None,
-) -> _pyodbc.Connection: ...
+) -> pyodbc_Connection: ...
 
 
 def oracle(
-    dsn: str, 
+    dsn: str,
     *,
     username: str | None = None,
     password: str | None = None,
     tnsnames: str | None = None,
     odbc_driver: str | _lit[False] | None = None,
-) -> _oracledb.Connection | _pyodbc.Connection:
+) -> oracledb_Connection | pyodbc_Connection:
     '''Returns connection to Oracle Database.
 
     Function tries to assume that ``dsn`` is name of DSN defined in ODBC manager;
@@ -150,10 +158,10 @@ def sqlserver(
     *,
     db: str | None = None,
     odbc_driver: str | None = None,
-) -> _pyodbc.Connection:
+) -> pyodbc_Connection:
     '''Returns connection to SQL Server.
 
-    Function tries to assume that ``dsn`` is name of DSN defined in ODBC manager; 
+    Function tries to assume that ``dsn`` is name of DSN defined in ODBC manager;
     if it does not find such connection then assumes that it is name / address of server.
 
     :param dsn: Name of server or data source or address of server
@@ -161,7 +169,7 @@ def sqlserver(
         - defaults to ``db.def_MS_port``
     :param odbc_driver: Name of driver used for odbc connection
         - defaults to ``db.def_MS_odbc_driver``
-    :raises ValueError: When one of configuration arguments is missing 
+    :raises ValueError: When one of configuration arguments is missing
         and there is no default setup.
     :return: Connection to specified SQL Server
     '''
@@ -198,3 +206,63 @@ def sqlserver(
     conn += 'Trusted_Connection=yes;'
 
     return _pyodbc.connect(conn)
+
+def data_sources() -> dict[str, str]:
+    '''
+    Returns dictionary of registered ODBC Data Source Names, as well as their descriptions.
+    '''
+    return _pyodbc.dataSources()
+
+def odbc_drivers() -> dict[str, _Path | None]:
+    '''
+    Returns dictionary of odbc drivers and paths to their locations.
+
+    It might not be possible to fetch driver locations, in which case ``None``
+    will be associated instead of ``Path``.
+    '''
+    return {
+        driver: _get_driver_path(driver)
+        for driver in _pyodbc.drivers()
+    }
+
+
+def _get_driver_path(driver: str | None) -> _Path | None:
+    if driver is None: return None
+    if _sys.platform == 'win32':
+        import winreg
+        import platform
+        if platform.architecture()[0] == '32bit':
+            base_key = r'SOFTWARE\WOW6432Node\ODBC\ODBCINST.INI'
+        else:
+            base_key = r'SOFTWARE\ODBC\ODBCINST.INI'
+        try:
+            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, f'{base_key}\{driver}')
+
+            for valueEx in ('Diver', 'Setup'):
+                try:
+                    value, _ = winreg.QueryValueEx(key, valueEx)
+                    path = _Path(value)
+
+                    if path.exists(): return path
+                except FileNotFoundError:
+                    pass
+        except FileNotFoundError:
+            pass
+    if _sys.platform == 'darwin' or _sys.platform == 'linux':
+        import subprocess
+
+        try:
+            result = subprocess.run(
+                ['odbcinst', '-q', '-d', '-n', driver],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+        except Exception:
+            return None
+
+        for line in result.stdout.splitlines():
+            if line.startswith('Driver='):
+                return _Path(line.removeprefix('Driver='))
+
+    return None
