@@ -1,11 +1,11 @@
 '''
-``db`` module provides utilities for working with databases using universal-ish API.
+`db` module provides utilities for working with databases using universal-ish API.
 
-Functions named with database name, return ``Connection`` objects of their respective libraries,
+Functions named with database name, return `Connection` objects of their respective libraries,
 using provided configuration.
 
 Most of configuration can fed using defaults, which will be used when their respective parameters
-are left ``None``, using ``def_*`` variables.
+are left `None`, using `def_*` variables.
 '''
 from ._connections import (
     def_Ora_username,

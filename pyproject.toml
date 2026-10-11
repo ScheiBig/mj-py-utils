@@ -1,9 +1,12 @@
 [project]
-name = "mjpyutils"
-version = "0.2.0"
-requires-python = ">=3.11"
+name = 'mjpyutils'
+version = '0.2.0'
+requires-python = '>=3.11'
 
 dependencies = [
-    "oracledb",
-    "pyodbc"
+    'oracledb',
+    'pyodbc',
+    'polars',
+    'arrow-odbc',
+    'pyarrow',
 ]

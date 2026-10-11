@@ -1,24 +1,20 @@
-__all__ = [
-    'timer',
-]
-
 from time import (
-    perf_counter as _perftime,
-    time as _time,
+    perf_counter,
+    time,
 )
 from typing import (
-    Any as _any,
-    Generator as _gen,
-    Callable as _fun,
-    TypedDict as _tdict,
-    Literal as _lit,
+    Any as any_type,
+    Generator as gen,
+    Callable as fun,
+    TypedDict as tdict,
+    Literal as lit,
 )
 from math import (
-    nan as _NaN,
-    isnan as _isNaN,
+    nan,
+    isnan,
 )
-from datetime import datetime as _datetime
-from types import MethodType as _MethodType
+from datetime import datetime
+from types import MethodType
 
 class timer(object):
     '''Allows measuring time - especially useful for measurement of fragments of code.
@@ -40,7 +36,7 @@ class timer(object):
     ```
     '''
 
-    type hook = _fun[[timer, _datetime], str | None]
+    type hook = fun[[timer, datetime], str | None]
     '''
     Hook for the ``timer`` to print message on state change.
 
@@ -50,10 +46,10 @@ class timer(object):
     def __init__(self, *,
         auto_start: bool = False,
         use_perf_time: bool = True,
-        onstart_print: timer.hook | _lit[True] | None = None,
-        onpause_print: timer.hook | _lit[True] | None = None,
-        onresume_print: timer.hook | _lit[True] | None = None,
-        onstop_print: timer.hook | _lit[True] | None = None,
+        onstart_print: timer.hook | lit[True] | None = None,
+        onpause_print: timer.hook | lit[True] | None = None,
+        onresume_print: timer.hook | lit[True] | None = None,
+        onstop_print: timer.hook | lit[True] | None = None,
     ) -> None:
         '''Creates new ``timer``.
 
@@ -75,26 +71,26 @@ class timer(object):
 
         self.__start_time: float | None = None
         self.__execution_time_s: float | None = None
-        self.__curtime: _fun[[], float] = _perftime if use_perf_time else _time
+        self.__curtime: fun[[], float] = perf_counter if use_perf_time else time
 
         self.__onstart_print: _bound_hook | None = (
-            _MethodType(_default_print('started'), self) if onstart_print == True
-            else _MethodType(onstart_print, self) if onstart_print is not None
+            MethodType(_default_print('started'), self) if onstart_print == True
+            else MethodType(onstart_print, self) if onstart_print is not None
             else None
         )
         self.__onpause_print: _bound_hook | None = (
-            _MethodType(_default_print('paused'), self) if onpause_print == True
-            else _MethodType(onpause_print, self) if onpause_print is not None
+            MethodType(_default_print('paused'), self) if onpause_print == True
+            else MethodType(onpause_print, self) if onpause_print is not None
             else None
         )
         self.__onresume_print: _bound_hook | None = (
-            _MethodType(_default_print('resumed'), self) if onresume_print == True
-            else _MethodType(onresume_print, self) if onresume_print is not None
+            MethodType(_default_print('resumed'), self) if onresume_print == True
+            else MethodType(onresume_print, self) if onresume_print is not None
             else None
         )
         self.__onstop_print: _bound_hook | None = (
-            _MethodType(_default_print('stopped'), self) if onstop_print == True
-            else _MethodType(onstop_print, self) if onstop_print is not None
+            MethodType(_default_print('stopped'), self) if onstop_print == True
+            else MethodType(onstop_print, self) if onstop_print is not None
             else None
         )
 
@@ -212,7 +208,7 @@ class timer(object):
 
         if self.__execution_time_s is None:
             if self.__start_time is None:
-                execution_time = _NaN
+                execution_time = nan
             else:
                 execution_time = self.__curtime() - self.__start_time
         else:
@@ -230,7 +226,7 @@ class timer(object):
         hours, rest = divmod(rest, 3600)
         minutes, rest = divmod(rest, 60)
         seconds, rest = divmod(rest, 1)
-        seconds = int(seconds) if not _isNaN(seconds) else seconds
+        seconds = int(seconds) if not isnan(seconds) else seconds
         rest *= 1_000_000
         milliss, micross = divmod(rest, 1000)
 
@@ -281,11 +277,11 @@ class timer(object):
                 f'.{v['prec']}f' if v['prec'] is not None
                 else '.0f'
             )
-            if v['prec'] is None and not _isNaN(tot):
+            if v['prec'] is None and not isnan(tot):
                 val = int(val)
 
             out += (
-                f'{val:{fmt}}' if not _isNaN(tot)
+                f'{val:{fmt}}' if not isnan(tot)
                 else f'{0.0:{fmt}}'.replace('0', '-')
             )
 
@@ -307,7 +303,7 @@ class timer(object):
             self.start()
         return self
 
-    def __exit__(self, exc_type: _any, exc_value: _any, traceback: _any) -> None:
+    def __exit__(self, exc_type: any_type, exc_value: any_type, traceback: any_type) -> None:
         '''Finalizes usage of ``timer`` as resource, by stopping it
 
         :param exc_type: _Ignored_
@@ -316,15 +312,15 @@ class timer(object):
         '''
         self.stop()
 
-class _token(_tdict):
-    directive: _lit['D', 'H', 'M', 'S', 'l', 'f', 's', '%'] | str
+class _token(tdict):
+    directive: lit['D', 'H', 'M', 'S', 'l', 'f', 's', '%'] | str
     width: int | None
-    pad: _lit['0', ' '] | None
+    pad: lit['0', ' '] | None
     prec: int | None
-    flag: _lit['#', '+'] | None
+    flag: lit['#', '+'] | None
     raw: str
 
-def _tokenize(spec: str) -> _gen[_token | str, _any, None]:
+def _tokenize(spec: str) -> gen[_token | str, any_type, None]:
     ptr = spec
 
     while ptr:
@@ -432,10 +428,10 @@ def _default_print(state: str) -> timer.hook:
         return lambda _, d: f'Timer {state} @ {d}'
     return lambda s, d: f'Timer {state} after {s} @ {d}'
 
-type _bound_hook = _fun[[_datetime], str | None]
+type _bound_hook = fun[[datetime], str | None]
 
 def _call_hook(hook: _bound_hook | None) -> None:
     if hook is not None:
-        s = hook(_datetime.now())
+        s = hook(datetime.now())
         if s is not None:
             print(s)

@@ -1,9 +1,5 @@
-__all__ = [
-    'password',
-]
-
-from getpass import getpass as _getpass
-from inspect import signature as _signature
+from getpass import getpass
+from inspect import signature
 
 def password(
     prompt: str = "Hasło: ",
@@ -21,10 +17,10 @@ def password(
         to a widget implementation ``Kernel.getpass``
     :return: Entered password ``str`` - if empty, then user cancelled
     '''
-    if 'echo_char' in _signature(_getpass).parameters:
+    if 'echo_char' in signature(getpass).parameters:
         try:
-            return _getpass(prompt, echo_char= echo_char)
+            return getpass(prompt, echo_char= echo_char)
         except (KeyboardInterrupt, EOFError):
             return ''
     else:
-        return _getpass(prompt)
+        return getpass(prompt)
