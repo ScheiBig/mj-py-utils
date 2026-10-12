@@ -42,6 +42,8 @@ it to this variable.
 '''
 
 def _init_defaults():
+    global def_Ora_odbc_driver
+    global def_MS_odbc_driver
     import itertools
     ora_driver = max(filter(
         lambda x: x.lower().find('oracle') >= 0,
@@ -160,15 +162,15 @@ def oracle(
         c_str = _conn_str({
             'DSN': dsn,
             'UID': username,
-            'PWD': password,
+            'PWD': _conn_esc(password),
         })
         return conn_fun, (c_str, ), {}
 
     c_str = _conn_str({
-        'DRIVER': odbc_driver,
+        'DRIVER': _conn_esc(odbc_driver),
         'DBQ': dsn,
         'UID': username,
-        'PWD': password,
+        'PWD': _conn_esc(password),
     })
     return conn_fun, (c_str, ), {}
 
@@ -252,7 +254,7 @@ def sqlserver(
                 'No odbc_driver passed or default set via [db.def_MS_odbc_driver]')
         odbc_driver = def_MS_odbc_driver
 
-    con_conf['DRIVER'] = odbc_driver
+    con_conf['DRIVER'] = _conn_esc(odbc_driver)
     con_conf['Trusted_Connection'] = 'yes'
 
     c_str = _conn_str(con_conf)
@@ -340,8 +342,11 @@ def _get_driver_path(driver: str | None) -> Path | None:
 
     return None
 
-def _conn_str(odbc_conf: dict[str, str]):
+def _conn_str(odbc_conf: dict[str, str]) -> str:
     return ';'.join([
-        f'{k}={{{v.replace('}', '}}')}}}'
+        f'{k}={v}'
         for k, v in odbc_conf.items()
     ]) + ';'
+
+def _conn_esc(odbc_val: str) -> str:
+    return f'{{{odbc_val.replace('}', '}}')}}}'
