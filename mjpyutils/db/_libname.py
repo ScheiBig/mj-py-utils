@@ -1,5 +1,5 @@
-from .. import _connections
-from .._connections import (
+from . import _connections
+from ._connections import (
     oracledb_Connection,
     polars_arrow_ODBCCursorProxy,
     pyodbc_Connection,
