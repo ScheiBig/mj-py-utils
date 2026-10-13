@@ -24,7 +24,7 @@ from ._db import (
     oracle,
     sqlserver,
 )
-from . import libname
+from ._libname import libname
 
 __all__ = [
     'def_Ora_username',
