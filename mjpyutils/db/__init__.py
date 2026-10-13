@@ -8,12 +8,7 @@ Most of configuration can fed using defaults, which will be used when their resp
 are left `None`, using `def_*` variables.
 '''
 from ._connections import (
-    def_Ora_username,
-    def_Ora_getpassword,
-    def_Ora_tnsnames,
-    def_Ora_odbc_driver,
-    def_MS_port,
-    def_MS_odbc_driver,
+    defs,
     data_sources,
     odbc_drivers,
     oracledb_Connection,
@@ -27,12 +22,7 @@ from ._db import (
 from ._libname import libname
 
 __all__ = [
-    'def_Ora_username',
-    'def_Ora_getpassword',
-    'def_Ora_tnsnames',
-    'def_Ora_odbc_driver',
-    'def_MS_port',
-    'def_MS_odbc_driver',
+    'defs',
     'oracle',
     'sqlserver',
     'libname',

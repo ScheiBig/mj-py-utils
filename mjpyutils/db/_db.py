@@ -68,15 +68,15 @@ def oracle(
 
     :param dsn: Name of tnsnames connection or data source
     :param username: Username used on database server
-        - defaults to :data:`db.def_Ora_username`
+        - defaults to :data:`db.defs.Ora_username`
     :param password: Password used on database server
-        - defaults to return of calling :data:`db.def_Ora_getpassword`
+        - defaults to return of calling :data:`db.defs.Ora_getpassword`
     :param tnsnames: Location of tnsnames.ora (path to folder containing it);
         might be ignored when `odbc_driver= False` or thick client is initialized
-        - defaults to :data:`db.def_Ora_tnsnames`
+        - defaults to :data:`db.defs.Ora_tnsnames`
     :param odbc_driver: Name of driver used for odbc connection;
         if `False`, then :mod:`oracledb` library is used instead of odbc
-        - defaults to :data:`db.def_Ora_odbc_driver`
+        - defaults to :data:`db.defs.Ora_odbc_driver`
     :param odbc_lib: What library to use as ODBC;
         - defaults to internal polars arrow-odbc proxy (:class:`polars_arrow_ODBCCursorProxy`),
         since it allows usage of connection in :func:`polars.read_database`, but allows choosing raw _arrow-odbc_ (:class:`arrow_odbc_Connection`), or _pyodbc_ (:class:`pyodbc_Connection`)
@@ -152,9 +152,9 @@ def sqlserver(
 
     :param dsn: Name of server or data source or address of server
     :param port: Port number of server; ignored when using ODBC DSN
-        - defaults to :data:`db.def_MS_port`
+        - defaults to :data:`db.defs.MS_port`
     :param odbc_driver: Name of driver used for odbc connection
-        - defaults to :data:`db.def_MS_odbc_driver`
+        - defaults to :data:`db.defs.MS_odbc_driver`
     :param odbc_lib: What library to use as ODBC;
         - defaults to internal polars arrow-odbc proxy (:class:`polars_arrow_ODBCCursorProxy`),
         since it allows usage of connection in :func:`polars.read_database`, but allows choosing raw _arrow-odbc_ (:class:`arrow_odbc_Connection`), or _pyodbc_ (:class:`pyodbc_Connection`)

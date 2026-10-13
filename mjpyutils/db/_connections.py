@@ -13,52 +13,55 @@ from typing import (
 from pathlib import Path
 import sys
 from polars.io.database._cursor_proxies import ODBCCursorProxy as polars_arrow_ODBCCursorProxy
+from dataclasses import dataclass
 
-def_Ora_username: str | None = None
-'''Default value used for `oracle(username=)`'''
-def_Ora_getpassword: fun[[], str] | None = None
-'''Function returning default value for `oracle(password=)`'''
-def_Ora_tnsnames: str | None = None
-'''Default value for `oracle(tnsnames=)`
+class _defs:
+    Ora_username: str | None = None
+    '''Default value used for `oracle(username=)`'''
+    Ora_getpassword: fun[[], str] | None = None
+    '''Function returning default value for `oracle(password=)`'''
+    Ora_tnsnames: str | None = None
+    '''Default value for `oracle(tnsnames=)`
 
-When using Oracle via ODBC, or when Oracle Client libraries are located
-and `oracledb` successfully loads into thick mode, this variable will have
-no effect whatsoever, as driver/client will use `.env.TNS_ADMIN` or client-specific
-tns_names.ora.
-'''
-def_Ora_odbc_driver: str | None = None
-'''Default value for `oracle(odbc_driver=)`
+    When using Oracle via ODBC, or when Oracle Client libraries are located
+    and `oracledb` successfully loads into thick mode, this variable will have
+    no effect whatsoever, as driver/client will use `.env.TNS_ADMIN` or client-specific
+    tns_names.ora.
+    '''
+    Ora_odbc_driver: str | None = None
+    '''Default value for `oracle(odbc_driver=)`
 
-During initialization, library will attempt to find any Oracle DB driver and assign
-it to this variable.
-'''
-def_MS_port: int | None = 1433
-'''Default value for `sqlserver(port=)`, preset by library to common 1433 port'''
-def_MS_odbc_driver: str | None = None
-'''Default value for `sqlserver(odbc_driver=)`
+    During initialization, library will attempt to find any Oracle DB driver and assign
+    it to this variable.
+    '''
+    MS_port: int | None = 1433
+    '''Default value for `sqlserver(port=)`, preset by library to common 1433 port'''
+    MS_odbc_driver: str | None = None
+    '''Default value for `sqlserver(odbc_driver=)`
 
-During initialization, library will attempt to find any SQL Server driver and assign
-it to this variable.
-'''
+    During initialization, library will attempt to find any SQL Server driver and assign
+    it to this variable.
+    '''
+
+defs = _defs()
+'''Namespace for default values used by connection functions.'''
 
 def _init_defaults():
-    global def_Ora_odbc_driver
-    global def_MS_odbc_driver
-    import itertools
+    global defs
     ora_driver = max(filter(
         lambda x: x.lower().find('oracle') >= 0,
-         pyodbc.drivers(),
+        pyodbc.drivers(),
     ), default= None)
-    def_Ora_odbc_driver = ora_driver
+    defs.Ora_odbc_driver = ora_driver
     try:
         oracledb.init_oracle_client()
     except:
         pass
     ms_driver = max(filter(
         lambda x: x.lower().find('sql server') >= 0,
-         pyodbc.drivers(),
+        pyodbc.drivers(),
     ), default= None)
-    def_MS_odbc_driver = ms_driver
+    defs.MS_odbc_driver = ms_driver
 _init_defaults()
 
 @overload
@@ -116,29 +119,29 @@ def oracle(
     dict[str, any_type],
 ]:
     if username is None:
-        if def_Ora_username is None:
+        if defs.Ora_username is None:
             raise ValueError(
-                'No username passed or default set via [db.def_Ora_username]'
+                'No username passed or default set via [db.defs.Ora_username]'
             )
-        username = def_Ora_username
+        username = defs.Ora_username
     if password is None:
-        if def_Ora_getpassword is None:
+        if defs.Ora_getpassword is None:
             raise ValueError(
-                'No password passed or default provider set via [db.def_Ora_getpassword]'
+                'No password passed or default provider set via [db.defs.Ora_getpassword]'
             )
-        password = def_Ora_getpassword()
+        password = defs.Ora_getpassword()
     if tnsnames is None and oracledb.is_thin_mode():
-        if def_Ora_tnsnames is None and odbc_driver == False:
+        if defs.Ora_tnsnames is None and odbc_driver == False:
             raise ValueError(
-                'No tnsnames passed or default set via [db.def_Ora_tnsnames]'
+                'No tnsnames passed or default set via [db.defs.Ora_tnsnames]'
             )
-        tnsnames = def_Ora_tnsnames
+        tnsnames = defs.Ora_tnsnames
     if odbc_driver is None:
-        if def_Ora_odbc_driver is None:
+        if defs.Ora_odbc_driver is None:
             raise ValueError(
-                'No odbc_driver passed or default set via [db.def_Ora_odbc_driver]'
+                'No odbc_driver passed or default set via [db.defs.Ora_odbc_driver]'
             )
-        odbc_driver = def_Ora_odbc_driver
+        odbc_driver = defs.Ora_odbc_driver
 
     if odbc_driver == False:
         return oracledb.connect, (), {
@@ -239,20 +242,20 @@ def sqlserver(
         return conn_fun, (c_str,), {}
 
     if port is None:
-        if def_MS_port is None:
+        if defs.MS_port is None:
             raise ValueError(
-                'No port passed or default set via [db.def_MS_port]')
-        port = def_MS_port
+                'No port passed or default set via [db.defs.MS_port]')
+        port = defs.MS_port
     con_conf = {'SERVER': f'{dsn},{port}'}
 
     if db:
         con_conf['DATABASE'] = db
 
     if odbc_driver is None:
-        if def_MS_odbc_driver is None:
+        if defs.MS_odbc_driver is None:
             raise ValueError(
-                'No odbc_driver passed or default set via [db.def_MS_odbc_driver]')
-        odbc_driver = def_MS_odbc_driver
+                'No odbc_driver passed or default set via [db.defs.MS_odbc_driver]')
+        odbc_driver = defs.MS_odbc_driver
 
     con_conf['DRIVER'] = _conn_esc(odbc_driver)
     con_conf['Trusted_Connection'] = 'yes'
